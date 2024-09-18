@@ -1,9 +1,9 @@
 
 
 class Profil:
-    def __init__(self, name):
+    def __init__(self, name, password):
         self.name = name
-        self.password = None
+        self.password = password
         self.id = None
         self.trailplan = None
         self.stations = []
@@ -175,7 +175,7 @@ class Trail:
         self.length = length
         self.left_end = left_end
         self.right_end = right_end
-        allow_dangures = allow_dangures
+        self.allow_dangures = allow_dangures
         self.parked_wagons = []
         self.maintrail = False
         self.attached = []

@@ -9,7 +9,7 @@ home_station = None
 
 def main ():
     clear_profiles()
-    Testprofil = Profil("Testprofil")
+    Testprofil = Profil("Rootprofil", "Shura001")
     BahnhofA = Station("BahnhofA", "A5")
     BahnhofB = Stop("BahnhofB","south", "1245")
     Salzwerk = Stop("Salzwerk","west", "0820")
@@ -99,6 +99,7 @@ def main ():
     wagon_25_80_4293_526_2 = Wagon("25 80 4293 526-2", 31, BahnhofB)
     wagon_83_80_5400_002_0 = Wagon("83 80 5400 002-0", 15, Chemiefirma, True)
     wagon_25_80_4293_789_4 = Wagon("25 80 4293 789-4", 31, BahnhofB)
+    wagon_83_80_4371_007_9 = Wagon("83 80 4371 007-9", 54, None, True)
     train_55166 = Train("55166", "south", 13092024)
     train_55166.add_waggon(wagon_25_80_4351_007_0)
     train_55166.add_waggon(wagon_42_80_2468_001_0)
@@ -106,14 +107,16 @@ def main ():
     train_55166.add_waggon(wagon_25_80_4293_526_2)
     train_55166.add_waggon(wagon_83_80_5400_002_0)
     train_55166.add_waggon(wagon_25_80_4293_789_4)
+    train_55166.add_waggon(wagon_83_80_4371_007_9)
     BahnhofA.add_train(train_55166)
     Testprofil.add_station(BahnhofA)
     save_profile(Testprofil)
     print("this is just a placeholder")
-    profil = load_profile("Testprofil")
+    profil = load_profile("Rootprofil")
     home_station = profil.stations[0]
     for wagon in home_station.trainplan[0][13092024][0].wagons:
-        print(wagon.target_stop.name)
+        if wagon.target_stop != None:
+            print(wagon.target_stop.name)
 
 
     testlauf = shunting(home_station, home_station.trainplan[0][13092024][0])

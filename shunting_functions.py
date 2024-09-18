@@ -110,7 +110,7 @@ def best_way(home_station, start, end, forbitten_names=[]):
             print("we cleared not_used and visited so we can start from the beginning")
             not_used = []
             visited = []
-        if count_whiles_fails > 40: # resets the fails and removes the forbitten from forbitten_repeats. stops the loop from always running in a dead end becouse we cut the end from the rest of the station.
+        if count_whiles_fails > 30: # resets the fails and removes the forbitten from forbitten_repeats. stops the loop from always running in a dead end becouse we cut the end from the rest of the station.
             if len(forbitten_repeat) != 0:
                 count_whiles_fails = 0
                 print(f"we removed {forbitten_repeat[-1]} from forbitten_repeat becouse we found no end with it ")
@@ -121,7 +121,7 @@ def best_way(home_station, start, end, forbitten_names=[]):
                 else: # ends the loop earlier if we dont cut the end form the rest of the station and the code still findes no way to the end
                     print("we break the loop becouse the last forbitten_repeat was used without finding an end")
                     end_while_loop = True
-        if count_whiles_fails > 99: # ends the loop after 100 dead ends
+        if count_whiles_fails > 59: # ends the loop after 60 dead ends
             print("we end the loop becouse while_fails are 100")
             end_while_loop = True
         # prints every step in a readable form in the loop to help debugging
@@ -170,7 +170,7 @@ def shunting(home_station, train):
             forbitten.append(trail)
     ways = [] # saves all driven ways
     shunting_wagons = [] # needed to show the current driven wagons
-    target = None # the target of the working_at_wagons
+    target = "not found yet" # the target of the working_at_wagons
     possible_end_trails = [] # possible targets for the working_at_wagons
     came_from = train.came_from # needed for the right order of the arriving train
     to_do_wagons = [] # all wagons of the arriving train
@@ -205,13 +205,6 @@ def shunting(home_station, train):
                             working_at = []
                             working_at.append(start.parked_wagons[x])
 
-        named_list = []
-        for wagon in working_at:
-            named_list.append(wagon.name)
-            named_list.append(wagon.target_stop.name)
-        print(f"we working at wagons {named_list}")
-        input("continue?")
-
         for x in range(0, len(start.parked_wagons)): # put all wagons befor the working_at to the shunting wagons.
             if start.parked_wagons[x] not in working_at and start.parked_wagons[x] not in shunting_wagons and start.parked_wagons[x] in to_do_wagons:
                 shunting_wagons.append(start.parked_wagons[x])
@@ -220,79 +213,54 @@ def shunting(home_station, train):
         for wagon in working_at: # put the working_at to the shunting wagons
             shunting_wagons.append(wagon)
 
-        named_list = []
-        for wagon in shunting_wagons:
-            named_list.append(wagon.name)
-        print(f"shunting_wagons = {named_list}")
-        input("continue")
-        
-        for wagon in shunting_wagons:
+        for wagon in shunting_wagons: #removes wagon from the starting trail
             start.remove_wagon(wagon)
 
-        named_list = []
-        for wagon in start_trail.parked_wagons:
-            named_list.append(wagon.name)
-        print(f"we are at {start.name}")
-        print(f"wagons left behind = {named_list}")
-        for position in ways:
-            if isinstance(position, str):
-                print(position)
-            if isinstance(position, list):
-                named_list = []
-                for item in position:
-                    named_list.append(item.name)
-                print(named_list)
-        input("continue")
-
-        for stop in home_station.stop_north: # looking where to find the possible trails for the stop of the working_at_wagons
-            if stop == working_at[0].target_stop:
-                target = "north"
-        for stop in home_station.stop_south:
-            if stop == working_at[0].target_stop:
-                target = "south"
-        for stop in home_station.stop_west:
-            if stop == working_at[0].target_stop:
-                target = "west"
-        for stop in home_station.stop_east:
-            if stop == working_at[0].target_stop:
-                target = "east"
-        for trail in home_station.trails:
-            if trail not in forbitten:
-                if trail.left_end == target or trail.right_end == target:
-                    if trail.parked_wagons == [] or trail.parked_wagons[-1].target_stop == working_at[-1].target_stop:
-                        possible_end_trails.append(trail)
-                    else:
-                        departure_time = int(working_at[-1].target_stop.departure_time)
-                        cardinal_direction = working_at[-1].target_stop.cardinal_direction
-                        allowed = True
-                        for wagon in trail.parked_wagons:
-                            if wagon.target_stop.cardinal_direction != cardinal_direction:
-                                allowed = False
-                            if int(wagon.target_stop.departure_time) < departure_time:
-                                allowed = False
-                            if wagon in to_do_wagons:
-                                allowed = False
-                        if allowed == True:
+        if working_at[0].target_stop != None:
+            for stop in home_station.stop_north: # looking where to find the possible trails for the stop of the working_at_wagons
+                if stop == working_at[0].target_stop:
+                    target = "north"
+            for stop in home_station.stop_south:
+                if stop == working_at[0].target_stop:
+                    target = "south"
+            for stop in home_station.stop_west:
+                if stop == working_at[0].target_stop:
+                    target = "west"
+            for stop in home_station.stop_east:
+                if stop == working_at[0].target_stop:
+                    target = "east"
+            for trail in home_station.trails:
+                if trail not in forbitten:
+                    if trail.left_end == target or trail.right_end == target: # checks if the target trail is empty or the wagons in it have the same target stop
+                        if trail.parked_wagons == [] or trail.parked_wagons[-1].target_stop == working_at[-1].target_stop:
                             possible_end_trails.append(trail)
+                        else:
+                            if working_at[-1].target_stop != None: # checks if the wagons already in the trail will leave the station bevor the working_at_wagons have to leave...
+                                departure_time = int(working_at[-1].target_stop.departure_time)
+                                cardinal_direction = working_at[-1].target_stop.cardinal_direction
+                                allowed = True
+                                for wagon in trail.parked_wagons:
+                                    if wagon.target_stop != None:
+                                        if wagon.target_stop.cardinal_direction != cardinal_direction:
+                                            allowed = False
+                                        if int(wagon.target_stop.departure_time) < departure_time:
+                                            allowed = False
+                                        if wagon in to_do_wagons:
+                                            allowed = False
+                            if allowed == True: #... if so the trail is still a possible end.
+                                possible_end_trails.append(trail)
 
-
-        named_list = []
-        print(f"wagon target = {working_at[-1].target_stop.name} in the {target}")
-        for end in possible_end_trails:
-            named_list.append(end.name)
-        print(f"possible trails = {named_list}")
-        input("continue?")
-
-        if start == start_trail and start_trail in possible_end_trails:
+        if start == start_trail and start_trail in possible_end_trails: # checks if the start_trail is also the target trail. if so, no shunting is needed.
             for wagon in shunting_wagons:
                 start_trail.park_wagon(wagon)
             for wagon in working_at:
                 to_do_wagons.remove(wagon)
                 working_at.remove(wagon)
-                stayed = f"Let {wagon.name} at {start_trail.name} for continue driving to {wagon.target_stop.name}"
-                ways.append(stayed)
+                if wagon.target_stop != None:
+                    stayed = f"Let {wagon.name} at {start_trail.name} for continue driving to {wagon.target_stop.name}"
+                    ways.append(stayed)
             shunting_wagons = []
-        else:
+        else: # checks if there are already wagons with the same target ready to be driven. if so, the trail with the wagons become the only possible target trail.
             found_way = []
             for end in possible_end_trails:
                 if end.parked_wagons != []:
@@ -301,7 +269,7 @@ def shunting(home_station, train):
                         possible_end_trails.append(end)
                         break
 
-            for end in possible_end_trails:
+            for end in possible_end_trails: # searching for the shortest way of all possible targets and chooses the nearest target trail
                 check_end = best_way(home_station, start, end.name)
                 if check_end == None:
                     continue
@@ -310,13 +278,7 @@ def shunting(home_station, train):
                 elif len(found_way) > len(check_end):
                     found_way = check_end
 
-            named_list = []
-            for item in found_way:
-                named_list.append(item.name)
-            print(f"found_way = {named_list}")
-            input("continue")
-            
-            if found_way != []:
+            if found_way != []: # if an allowed trail was found as possible target trail all wagons with that target are parked at the target trail
                 working_at.reverse()
                 for wagon in working_at:
                     found_way[-1].park_wagon_r(wagon)
@@ -325,29 +287,19 @@ def shunting(home_station, train):
                     target_found = f"park wagon {wagon.name} on {found_way[-1].name} for continue driving to {wagon.target_stop.name}"
                     ways.append(target_found)
                 working_at = []
+                ways.append(found_way) # the moved way is saved at ways for the shunting journal
+                start = found_way[-1] # the end trail becomes the new start so we can move on from that trail
 
-                named_list = []
-                for wagon in found_way[0].parked_wagons:
-                    named_list.append(wagon.name)
-                print(f"wagons at start = {named_list}")
-                named_list = []
-                for wagon in found_way[-1].parked_wagons:
-                    named_list.append(wagon.name)
-                print(f"wagons at end = {named_list}")
-                input("continue")
-            
-                ways.append(found_way)
-                start = found_way[-1]
-                if shunting_wagons == [] and to_do_wagons != []:
-                    back_to_start = best_way(home_station, start, start_trail.name)
+                if shunting_wagons == [] and to_do_wagons != []: # checks if there are still wagons to do at the trail the train has arrived when no wagons are left in the shunting group
+                    back_to_start = best_way(home_station, start, start_trail.name) # searches for the shortest way back to the start
                     back = "drive back to start_trail"
-                    ways.append(back)
+                    ways.append(back) # saves in the shunting journal, that we moved back to the start trail
                     ways.append(back_to_start)
                     start = back_to_start[-1]
             
-                if shunting_wagons != []:
-                    if start_trail.parked_wagons != []:
-                        if shunting_wagons[-1].target_stop == start_trail.parked_wagons[0]:
+                if shunting_wagons != []: # checks if there are wagons in the shunting group that we not already worked at.
+                    if start_trail.parked_wagons != []: # checks if there are wagons on the start trail that has the same target as the last wagon in the shunting group
+                        if shunting_wagons[-1].target_stop == start_trail.parked_wagons[0]: # if so, it dirves back to the start trail
                             back_to_start = best_way(home_station, start, start_trail.name)
                             for wagon in shunting_wagons:
                                 start_trail.park_wagon_r(wagon)
@@ -356,39 +308,82 @@ def shunting(home_station, train):
                             ways.append(back_to_start)
                             start = back_to_start[-1]
 
-                            named_list = []
-                            for wagon in start_trail.parked_wagons:
-                                named_list.append(wagon.name)
-                            print(f"wagons at start trail = {named_list}")
-                            input("continue")
-
+                shunting_wagons.reverse() # if not it parks the wagon at the current trail befor the wagon we worked at last time to form a new working at group when the while loop starts again
                 for wagon in shunting_wagons:
                     start.park_wagon_r(wagon)
-            if found_way == []:
-                error = f"creating shunting plan has failed becouse we found no way for {working_at[-1].name}"
-                ways.append(error)
-                to_do_wagons = []
 
-        shunting_wagons = []
+            if found_way == []: # checks if no target trail can be reached and looks for trails to park the wagons for later shunting operations
+                possible_end_trails = []
+                for trail in home_station.trails:
+                    if trail.left_end == None and trail.right_end == None:
+                        if working_at[-1].dangures_goods == True and trail.allow_dangures == True:
+                            possible_end_trails.append(trail)
+                        if working_at[-1].dangures_goods == False and trail.allow_dangures == False:
+                            possible_end_trails.append(trail)
+                            
+                for end in possible_end_trails: # if it found one it searches for the shortest way to the nearest target
+                    check_end = best_way(home_station, start, end.name)
+                    if check_end == None:
+                        continue
+                    elif found_way == []:
+                        found_way = check_end
+                    elif len(found_way) > len(check_end):
+                        found_way = check_end
+            
+                if found_way != []: # if it found a way it will move the wagons to it and park the wagons
+                    working_at.reverse()
+                    for wagon in working_at:
+                        found_way[-1].park_wagon_r(wagon)
+                        found_way[0].remove_wagon(wagon)
+                        to_do_wagons.remove(wagon)
+                        shunting_wagons.remove(wagon)
+                        target_found = f"park wagon {wagon.name} on {found_way[-1].name}"
+                        ways.append(target_found)
+                    working_at = []
+
+                    ways.append(found_way)
+                    start = found_way[-1]
+                    if shunting_wagons == [] and to_do_wagons != []:
+                        back_to_start = best_way(home_station, start, start_trail.name)
+                        back = "drive back to start_trail"
+                        ways.append(back)
+                        ways.append(back_to_start)
+                        start = back_to_start[-1]
+                
+                    if shunting_wagons != []:
+                        if start_trail.parked_wagons != []:
+                            if shunting_wagons[-1].target_stop == start_trail.parked_wagons[0]:
+                                back_to_start = best_way(home_station, start, start_trail.name)
+                                for wagon in shunting_wagons:
+                                    start_trail.park_wagon_r(wagon)
+                                back = "drive back to start_trail"
+                                ways.append(back)
+                                ways.append(back_to_start)
+                                start = back_to_start[-1]
+
+                    shunting_wagons.reverse()
+                    for wagon in shunting_wagons:
+                        start.park_wagon_r(wagon)
+
+        if found_way == []: # if it still find no way the code is stucked in a dead end. it gives up all all other operations and write an error in the shunting journal
+            error = f"Can´t create a shunting plan becouse we found no allowed place for {working_at[-1].name}"
+            ways.append(error)
+            to_do_wagons = []
+
+        shunting_wagons = [] # clears the shunting wagons and the possible_end_trails for a clean restart of the while_loop
         possible_end_trails = []
 
-        named_list = []
-        for wagon in start.parked_wagons:
-            named_list.append(wagon.name)
-        print(f"wagons at {start.name} = {named_list}")
-        named_list = []
-        for wagon in to_do_wagons:
-            named_list.append(wagon.name)
-        print(f"wagons still to do = {named_list}")
-        input("continue")    
-    parked_wagons = []
+    parked_wagons = [] # writes the position of every wagon in the station.
     for trail in home_station.trails:
         if trail.parked_wagons != []:
             current_trail = f"At {trail.name} are following wagons:"
             parked_wagons.append(current_trail)
             named_list= []
             for wagon in trail.parked_wagons:
-                wagon_with_target = f"{wagon.name} for {wagon.target_stop.name}"
+                if wagon.target_stop != None:
+                    wagon_with_target = f"{wagon.name} for {wagon.target_stop.name}"
+                else:
+                    wagon_with_target = f"{wagon.name} with no target stop"
                 named_list.append(wagon_with_target)
             parked_wagons.append(named_list)
             
